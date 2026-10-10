@@ -1,0 +1,163 @@
+{
+  "data": {
+    "zw_counts_ben_before_nfc": {
+      "ZWJ": 2,
+      "ZWNJ": 9
+    },
+    "zw_counts_ben_after_nfc": {
+      "ZWJ": 2,
+      "ZWNJ": 9
+    },
+    "sentences_changed_by_nfc": {
+      "eng": 0,
+      "ben": 609
+    }
+  },
+  "u+fffd_in_source_text": 0,
+  "tokenizers": {
+    "Qwen2.5": {
+      "repo": "Qwen/Qwen2.5-7B",
+      "revision": "d149729398750b98c0af14eb82c78cfe92750796",
+      "variant": "",
+      "vocab_entries_with_bengali_char": 47,
+      "vocab_entries_decoded": 151665,
+      "has_unk_token": false,
+      "byte_level_bpe": true,
+      "mirror_check": null,
+      "per_lang": {
+        "eng": {
+          "n_tokens": 27621,
+          "unk_rate": 0.0,
+          "partial_char_rate": 0.0,
+          "roundtrip_exact_rate": 1.0
+        },
+        "ben": {
+          "n_tokens": 138814,
+          "unk_rate": 0.0,
+          "partial_char_rate": 0.6761133603238867,
+          "roundtrip_exact_rate": 1.0
+        }
+      }
+    },
+    "Llama-3.1": {
+      "repo": "meta-llama/Llama-3.1-8B",
+      "revision": "d04e592bb4f6aa9cfee91e2e20afa771667e1d4b",
+      "variant": "",
+      "vocab_entries_with_bengali_char": 9,
+      "vocab_entries_decoded": 128256,
+      "has_unk_token": false,
+      "byte_level_bpe": true,
+      "mirror_check": "mirror unsloth/Meta-Llama-3.1-8B vocab identical to official: True",
+      "per_lang": {
+        "eng": {
+          "n_tokens": 27171,
+          "unk_rate": 0.0,
+          "partial_char_rate": 0.0,
+          "roundtrip_exact_rate": 1.0
+        },
+        "ben": {
+          "n_tokens": 158715,
+          "unk_rate": 0.0,
+          "partial_char_rate": 0.8458683804303311,
+          "roundtrip_exact_rate": 1.0
+        }
+      }
+    },
+    "Gemma-2": {
+      "repo": "google/gemma-2-9b",
+      "revision": "33c193028431c2fde6c6e51f29e6f17b60cbfac6",
+      "variant": "",
+      "vocab_entries_with_bengali_char": 289,
+      "vocab_entries_decoded": 256000,
+      "has_unk_token": true,
+      "byte_level_bpe": false,
+      "mirror_check": "mirror unsloth/gemma-2-9b vocab identical to official: True",
+      "per_lang": {
+        "eng": {
+          "n_tokens": 27036,
+          "unk_rate": 0.0,
+          "partial_char_rate": 0.0,
+          "roundtrip_exact_rate": 1.0
+        },
+        "ben": {
+          "n_tokens": 72174,
+          "unk_rate": 0.0,
+          "partial_char_rate": 0.0,
+          "roundtrip_exact_rate": 1.0
+        }
+      }
+    },
+    "mT5": {
+      "repo": "google/mt5-base",
+      "revision": "2eb15465c5dd7f72a8f7984306ad05ebc3dd1e1f",
+      "variant": "",
+      "vocab_entries_with_bengali_char": 1885,
+      "vocab_entries_decoded": 250100,
+      "has_unk_token": true,
+      "byte_level_bpe": false,
+      "mirror_check": null,
+      "per_lang": {
+        "eng": {
+          "n_tokens": 33791,
+          "unk_rate": 0.0,
+          "partial_char_rate": 0.0,
+          "roundtrip_exact_rate": 0.9960474308300395
+        },
+        "ben": {
+          "n_tokens": 52953,
+          "unk_rate": 0.0,
+          "partial_char_rate": 0.0,
+          "roundtrip_exact_rate": 0.9199604743083004
+        }
+      }
+    },
+    "BanglaBERT": {
+      "repo": "csebuetnlp/banglabert",
+      "revision": "9ce791f330578f50da6bc52b54205166fb5d1c8c",
+      "variant": "csebuetnlp normalizer applied (main)",
+      "vocab_entries_with_bengali_char": 29127,
+      "vocab_entries_decoded": 32000,
+      "has_unk_token": true,
+      "byte_level_bpe": false,
+      "mirror_check": null,
+      "per_lang": {
+        "eng": {
+          "n_tokens": 45470,
+          "unk_rate": 0.00010996261271167803,
+          "partial_char_rate": 0.0,
+          "roundtrip_exact_rate": 0.6017786561264822
+        },
+        "ben": {
+          "n_tokens": 26963,
+          "unk_rate": 0.00011126358342914364,
+          "partial_char_rate": 0.0,
+          "roundtrip_exact_rate": 0.011857707509881422
+        }
+      }
+    },
+    "BanglaBERT-raw": {
+      "repo": "csebuetnlp/banglabert",
+      "revision": "9ce791f330578f50da6bc52b54205166fb5d1c8c",
+      "variant": "no normalizer",
+      "vocab_entries_with_bengali_char": 29127,
+      "vocab_entries_decoded": 32000,
+      "has_unk_token": true,
+      "byte_level_bpe": false,
+      "mirror_check": null,
+      "per_lang": {
+        "eng": {
+          "n_tokens": 45405,
+          "unk_rate": 0.0016518004625041295,
+          "partial_char_rate": 0.0,
+          "roundtrip_exact_rate": 0.5849802371541502
+        },
+        "ben": {
+          "n_tokens": 26941,
+          "unk_rate": 0.0008165992353661706,
+          "partial_char_rate": 0.0,
+          "roundtrip_exact_rate": 0.007905138339920948
+        }
+      }
+    }
+  }
+}
