@@ -1,69 +1,107 @@
 # How many tokens does Bangla cost across LLMs?
 
-`bangla_token_tax.ipynb` is a self-contained Kaggle notebook. It measures how many more tokens Bangla needs than English for the same meaning, using FLORES-200 devtest (1,012 aligned sentences), and compares five tokenizers with four tokenizer-free "rulers". It downloads only tokenizers and configs, never model weights. It does no training and needs no GPU.
+A small, pre-registered measurement study. Positional methods such as RoPE and ALiBi count distance in **tokens**. If Bangla needs many more tokens than English for the same meaning, the same real distance looks longer in Bangla, and less Bangla text fits in a context window. This repository measures that gap on FLORES-200 and asks which unit of measurement (the "ruler") is fairest across the two languages.
 
-## Kaggle settings
+![Bangla/English token ratio per tokenizer](results/figures/token_ratio.png)
 
-| Setting | Value |
-|---|---|
-| Accelerator | **None** (CPU) |
-| Internet | **On** (Settings → Internet) |
-| Environment | Default image. Tested with transformers 4.46.3, which is the version installed if transformers is missing. |
-| Run | **Save Version → Save & Run All** |
+## Key findings
 
-## Secrets
+On FLORES-200 devtest (1,012 English–Bangla sentence pairs):
 
-Add-ons → Secrets → add `HF_TOKEN` (a Hugging Face read token) and attach it to the notebook.
+- **Bangla needs 2.7–5.8× as many tokens as English** for the same content in current LLM tokenizers.
 
-The token is used for these gated repos:
-- `meta-llama/Llama-3.1-8B` and `google/gemma-2-9b`. Accept their licences on Hugging Face first. Without access, the notebook falls back to `unsloth/Meta-Llama-3.1-8B` and `unsloth/gemma-2-9b`, and it logs that the mirror's vocab could not be checked against the official repo.
-- `openlanguagedata/flores_plus`. This is only the second data source, used if the NLLB tarball fails.
+  | Tokenizer | Tokens/word (EN) | Tokens/word (BN) | BN/EN token ratio [95% CI] |
+  |---|---|---|---|
+  | Llama 3.1 | 1.24 | 8.14 | **5.84** [5.78, 5.91] |
+  | Qwen 2.5 | 1.26 | 7.12 | **5.03** [4.97, 5.09] |
+  | Gemma 2 | 1.23 | 3.70 | **2.67** [2.64, 2.70] |
+  | mT5 | 1.54 | 2.72 | **1.57** [1.55, 1.58] |
+  | BanglaBERT* | 2.08 | 1.38 | 0.59 (not meaningful) |
 
-If the secret is missing, the notebook logs a warning and keeps going with the fallbacks.
+  \* BanglaBERT is a Bangla-only tokenizer. It is reported as a best-case reference for Bangla, but its Bangla/English ratio is not meaningful.
 
-## Packages
+- **Most of the context window is lost.** At a 128k-token window, Llama 3.1 holds as much Bangla content as about 22k tokens of English (**83% lost**), and Qwen 2.5 about 26k (80% lost). Gemma 2's native 8k window fits 303 English sentences but only 104 Bangla ones.
+- **Llama and Qwen often split single Bangla letters.** 85% (Llama) and 68% (Qwen) of Bangla tokens are byte fragments that don't form a complete character on their own.
+- **Characters are almost language-neutral.** Measured in Unicode characters, the Bangla/English ratio is **0.988** [0.980, 0.996], with the lowest variation across sentences of any ruler (CV 0.140). Every multilingual tokenizer is far from parity. This motivates measuring position in characters rather than tokens.
 
-These are pip-installed only if they are missing: `sentencepiece`, `protobuf`, `regex`, and the BanglaBERT normalizer (`git+https://github.com/csebuetnlp/normalizer`). If transformers cannot be imported, `transformers==4.46.3` is installed.
+![Ruler comparison](results/figures/ruler_comparison.png)
 
-## Expected runtime
+| Ruler | BN/EN ratio [95% CI] | CV across sentences |
+|---|---|---|
+| characters | **0.988** [0.980, 0.996] | 0.140 |
+| words (whitespace) | 0.891 [0.882, 0.900] | 0.173 |
+| grapheme clusters | 0.619 [0.614, 0.624] | 0.149 |
+| UTF-8 bytes | 2.640 [2.618, 2.662] | 0.141 |
+| mT5 tokens | 1.567 [1.553, 1.581] | 0.152 |
+| Gemma 2 tokens | 2.670 [2.640, 2.699] | 0.184 |
+| Qwen 2.5 tokens | 5.026 [4.965, 5.086] | 0.198 |
+| Llama 3.1 tokens | 5.841 [5.775, 5.907] | 0.191 |
 
-About 2–5 minutes on Kaggle CPU. Most of that is downloads: the 25 MB FLORES tarball, about 60 MB of tokenizer files, and the normalizer install. The compute part (tokenization, a 10,000-resample paired bootstrap, and decoding every vocab id) took about 25 s on a laptop.
+## Pre-registered hypotheses
 
-## Data source order
+These were written down before any results were computed (first cell of the notebook):
 
-1. `https://dl.fbaipublicfiles.com/nllb/flores200_dataset.tar.gz`, original FLORES-200. The SHA-256 is recorded.
-2. `openlanguagedata/flores_plus` (the later corrected FLORES+), pinned to the dataset commit. The `.parquet` or `.jsonl` files are inspected and their columns logged.
-3. Otherwise the notebook stops and asks you to attach `eng_Latn.devtest` and `ben_Beng.devtest` as a Kaggle dataset.
+| | Hypothesis | Result |
+|---|---|---|
+| H1 | Llama 3.1, Qwen 2.5 and Gemma 2 each have a Bangla/English token ratio > 1.5 | **PASS** |
+| H2 | BanglaBERT has the lowest Bangla fertility of the five tokenizers | **PASS** |
+| H3 | Characters or graphemes give a ratio closer to 1 than any tokenizer's tokens | **PASS** |
+| Rule | If all three modern LLMs have ratios < 1.3, the position-encoding motivation is weak | **Not triggered** |
 
-`run_info.json → data.version` records which version was used.
+## Repository contents
 
-## Output files (`/kaggle/working/`)
+```
+├── bangla_token_tax.ipynb     # the full study; runs top to bottom on Kaggle
+├── src/
+│   ├── bangla_token_tax.py    # notebook source (percent format)
+│   └── build_notebook.py      # regenerates the .ipynb from the source
+└── results/
+    ├── results_main.csv       # one row per tokenizer: fertility, ratio, CI, metadata
+    ├── ruler_comparison.csv   # every ruler: ratio, CI, coefficient of variation
+    ├── effective_context.csv  # English-equivalent window and sentences that fit, per window size
+    ├── per_sentence.csv       # every count for every sentence
+    ├── example_tokenizations.csv
+    ├── diagnostics.json       # UNK, partial-character, round-trip, Bengali vocab counts
+    ├── run_info.json          # versions, data source, tokenizer commit hashes
+    ├── summary.md             # all tables in one file
+    └── figures/               # 5 PNG figures
+```
 
-| File | Contents |
-|---|---|
-| `results_main.csv` | One row per tokenizer: repo, revision, class, vocab size, native window, fertility (corpus and mean), tokens/char, Bangla/English ratio with 95% CI, median/IQR, CV |
-| `ruler_comparison.csv` | Words, characters, graphemes, bytes and every tokenizer: ratio, CI, CV, distance from 1 |
-| `effective_context.csv` | W ∈ {512, 2k, 8k, 32k, 128k} plus native window: English-equivalent window, % lost, sentences that fit (en/bn), corpus-exhausted flags |
-| `per_sentence.csv` | Texts and every ruler count per sentence, plus per-sentence ratios |
-| `example_tokenizations.csv` | Token pieces (raw and decoded) for 3 fixed sentences × tokenizer × language |
-| `diagnostics.json` | UNK rate, partial-character (U+FFFD) rate, Bengali-block vocab count, round-trip rate, ZWJ/ZWNJ and NFC counts |
-| `run_info.json` | Date, Python and library versions, data source/version, tokenizer repo/revision/vocab, fallbacks, warnings, hypothesis verdicts, runtime |
-| `summary.md` | All tables, hypothesis verdicts, skipped tokenizers, fallbacks and warnings |
-| `figures/fertility.png` | Tokens per word, English and Bangla side by side |
-| `figures/token_ratio.png` | Bangla/English token ratio with 95% CI, parity line at 1 |
-| `figures/ruler_comparison.png` | Ratio per ruler with CI and CV |
-| `figures/ratio_distribution.png` | Violin plot of per-sentence ratios per tokenizer |
-| `figures/effective_context.png` | English-equivalent window vs W (star = native window) |
+## Method
 
-The last cell prints a block between `===== SHARE WITH CLAUDE: START =====` and `===== SHARE WITH CLAUDE: END =====` (about 120 lines). Copy it back into the chat.
+- **Data:** FLORES-200 devtest, `eng_Latn` and `ben_Beng`, 1,012 aligned sentences, Unicode NFC-normalized. Alignment is checked automatically.
+- **Tokenizers:** Qwen 2.5 (`Qwen/Qwen2.5-7B`), Llama 3.1 (`meta-llama/Llama-3.1-8B`), Gemma 2 (`google/gemma-2-9b`), mT5 (`google/mt5-base`), BanglaBERT (`csebuetnlp/banglabert`), each pinned to a commit hash (see `results/run_info.json`). Only tokenizers and configs are downloaded, never model weights. Special tokens are excluded.
+- **Rulers:** whitespace words, Unicode code points, grapheme clusters (`\X`), UTF-8 bytes, and tokens from each tokenizer.
+- **Statistics:** corpus-level ratio (sum of Bangla units / sum of English units) with a 95% paired bootstrap CI (10,000 resamples, seed 0, same resamples for every ruler), plus per-sentence median, IQR and coefficient of variation.
+- **Effective context:** English-equivalent window = W / ratio for W = 512 to 131,072 and each model's native window.
 
-## Methodological notes
+## Reproduce it
 
-- Text is Unicode NFC-normalized. In FLORES-200 Bangla, NFC decomposes the precomposed letters য় U+09DF, ড় U+09DC and ঢ় U+09DD into a base letter plus nukta, because they are Unicode composition exclusions. This changes 609 of 1,012 Bangla sentences and adds about 1% more code points. `diagnostics.json` records the counts.
-- Token counts use `add_special_tokens=False`.
-- BanglaBERT appears twice: with the csebuetnlp normalizer (main table) and without it (`BanglaBERT-raw`). It is Bangla-only, so its Bangla/English ratio is labeled "not meaningful".
-- The bootstrap is paired. One 10,000 × N index matrix (seed 0) is shared by every ruler, so their CIs can be compared directly.
-- "Sentences that fit" adds up per-sentence token counts in FLORES order. A `+` means the whole corpus fits, so the count is a lower bound.
-- Local smoke test only: setting the environment variable `BTT_SMOKE_N=20` runs the notebook on the first 20 sentences (after the full-corpus checks). Leave it unset on Kaggle.
+1. Import `bangla_token_tax.ipynb` into Kaggle (**File → Import Notebook**).
+2. Settings: Accelerator **None**, Internet **On**.
+3. **Add-ons → Secrets:** add a Hugging Face read token as `HF_TOKEN` and tick it for this notebook. Accept the licences for `meta-llama/Llama-3.1-8B` and `google/gemma-2-9b` on Hugging Face first. Without a token, the notebook falls back to the `unsloth/` mirrors. Their vocabularies were verified to be identical to the official ones.
+4. **Save & Run All.** It takes about 1–5 minutes on CPU. Outputs go to `/kaggle/working/`.
 
-`src/` contains the percent-format source (`bangla_token_tax.py`) and `build_notebook.py`, which regenerates the `.ipynb` from it.
+Results were identical with transformers 4.46.3 (Python 3.11) and 5.16.1 (Python 3.13).
+
+## Caveats
+
+- **NFC normalization** splits the precomposed letters য়, ড় and ঢ় into a base letter plus nukta, because they are Unicode composition exclusions. This affects 609 Bangla sentences and adds about 1% more characters.
+- **Formatting quirks in the original FLORES-200 Bangla file.** 67 lines are wrapped in spreadsheet-style quotes and 71 contain double spaces. The effect on the ratios is well under 1%.
+- **"Sentences that fit" is approximate.** It adds per-sentence token counts rather than tokenizing one concatenated text.
+- **One corpus.** FLORES is Wikipedia-style text, so other domains may differ.
+
+## Related work
+
+This study updates earlier measurements of cross-lingual tokenization disparity to current tokenizers and adds the ruler comparison. In particular:
+
+- Petrov, La Malfa, Torr & Bibi (2023). *Language Model Tokenizers Introduce Unfairness Between Languages.* NeurIPS 2023.
+
+## Data and citations
+
+- **FLORES-200:** NLLB Team et al. (2022). *No Language Left Behind: Scaling Human-Centered Machine Translation.* Goyal et al. (2022). *The FLORES-101 Evaluation Benchmark for Low-Resource and Multilingual Machine Translation.* TACL. FLORES-200 is licensed under **CC BY-SA 4.0**. `results/per_sentence.csv` and `results/example_tokenizations.csv` contain FLORES sentences and are shared under the same licence.
+- **BanglaBERT:** Bhattacharjee et al. (2022). *BanglaBERT: Language Model Pretraining and Benchmarks for Low-Resource Language Understanding Evaluation in Bangla.* Findings of NAACL 2022. Text normalized with the [csebuetnlp normalizer](https://github.com/csebuetnlp/normalizer) as its model card recommends.
+
+## License
+
+Code: MIT (see `LICENSE`). Data excerpts in `results/`: CC BY-SA 4.0, following FLORES-200.
