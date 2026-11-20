@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this code or results, please cite it as below."
+title: "How many tokens does Bangla cost across LLMs? Tokenizer measurement on FLORES-200"
+authors:
+  - family-names: Deb
+    given-names: Jhishan
+type: software
+repository-code: "https://github.com/JhishanDeb/bangla-token-tax"
+license: MIT
+keywords:
+  - tokenization
+  - Bangla
+  - multilingual NLP
+  - FLORES-200
